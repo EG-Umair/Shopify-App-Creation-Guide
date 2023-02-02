@@ -1,328 +1,254 @@
-# Shopify-App-Creation-Guide
-Shopify App Creation Guide
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#	Magento Helping Guide
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-```
- {{  -------------------------------------------------------------------------------------------------------------  }} 
- {{  -----------------       How To Create Laravel Shopify Apps using Osiset Package       -------------------   }}
- {   https://github.com/osiset/laravel-shopify/wiki/Creating-Webhooks   }
- {{  -------------------------------------------------------------------------------------------------------------  }} 
-```
+##	1): sudo apt-get update
+		-- Check Version of required setup before Installation
+			- Composer: composer or composer --version
+			- PHP: php -v
+			- MySQL: mysql -V OR mysql -v
+			- Elasticsearch: curl -XGET 'http://localhost:9200'
+			
+##	2): sudo apt update
+##	3): sudo install composer
+		-- sudo apt update
+		-- sudo apt install php-cli unzip
+		-- cd ~
+		-- curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
+		-- HASH=`curl -sS https://composer.github.io/installer.sig`
+		-- php -r "if (hash_file('SHA384', '/tmp/composer-setup.php') === '$HASH') { echo 'Installer verified'; } 
+		   else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+		-- sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
-- 1: download laragon with php 7.4
-- 2: composer create-project --prefer-dist laravel/laravel:^7.0 test_app
-- 3: composer require osiset/laravel-shopify:16.* (  for Non-Embend App's )
-  #                                                      OR
-- 3: composer require osiset/laravel-shopify:17.* (  for Embend App's )
-- 4: php artisan vendor:publish --tag=shopify-config
-- 5: https://(your-domain).com/ ( Your app dir URL )
-- 6: https://(your-domain).com/authenticate ( in app create section add Rediect's URL )
-- 7: edit file ---> routes/web.php and modify the default route 
-  ```
-  Route::get('/', function () { return view('welcome'); })->middleware(['verify.shopify'])->name('home');
-  ```
-- 8: Modify file --->  resources/views/welcome.blade.php 
+##	4): sudo install php 7.*, 8.*
+		-- sudo apt update
+		-- sudo apt install --no-install-recommends php8.1
+		-- sudo apt-get install php8.1-PACKAGE_NAME --> { sudo apt-get install php8.1-PACKAGE_NAME }
+		-- sudo apt install php8.1-{gd,zip,mysql,oauth,yaml,fpm,mbstring,memcache,dom,xml,bcmath,ctype,curl,iconv,intl,soap,xsl,sockets}
+		-- change php version 
+			- https://hostadvice.com/how-to/how-to-switch-between-php-versions-on-an-ubuntu-22-04-vps-or-dedicated-server/#:~:text=By%20default%2C%20Ubuntu%20will%20set%20the%20latest%2C%20stable,%24%20sudo%20a2dismod%20php8.1%20%24%20sudo%20a2enmod%20php7.2	
+		
+		
+##	5): sudo install mysql 5.6, 5.7
+		-- sudo apt update
+		-- sudo apt install mysql-server   
+		-- sudo systemctl start mysql.service
+				OR
+		-- sudo mysql_secure_installation 
+			- sudo mysql
+			- ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'admin';  
+				ALTER USER command to change the 'root' user’s authentication method to one that uses a 'password'. 
+			- exit
+			- pass -> admin@123 : name -> root
+		-- mysql -u root -p  --> { access mysql scure with pass }
+		-- Creating a Dedicated MySQL User and Granting Privileges
+			- sudo mysql
+			- mysql -u root -p
+			- CREATE USER 'admin'@'host' IDENTIFIED WITH authentication_plugin BY 'admin@123'; -->  { MySQL’s default plugin, caching_sha2_password. }
+			- CREATE USER 'sammy'@'localhost' IDENTIFIED BY 'password';
 
-  ```
-  @extends('shopify-app::layouts.default')
-  @section('content')
-      <!-- You are: (shop domain name) -->
-      <p>You are: {{ $shopDomain ?? Auth::user()->name }}</p>
-  @endsection
-  @section('scripts')
-      @parent
-      <script>
-          actions.TitleBar.create(app, { title: 'Welcome' });
-      </script>
-  @endsection
-  ```
-  
-- 9: Edit file ---> app/User.php or app/Models/User.php
-  
-  ```
-  use Osiset\ShopifyApp\Contracts\ShopModel as IShopModel;
-  use Osiset\ShopifyApp\Traits\ShopModel;
-  class User extends Authenticatable implements IShopModel
-  use ShopModel;
-  ```
-  
-- 10: For 16.* 
-  ```
-  package use --->  ( auth.shopify  )
-  ```
-#                           OR
-- 10: For 17.* 
-  ```
-  package use --->  ( verify.shopify  )
-  ```
-  
-- 11:  handle missing domainName exception  goto ---> app\Exceptions\Handler.php  & paste this code their
-  
-  ```
-  public function render($request, Throwable $exception){
-        if( $exception instanceof \Osiset\ShopifyApp\Exceptions\MissingShopDomainException ){
-            return response()->view('login', [], 500);
-        }
-        return parent::render($request, $exception);
-  }
-  ```
+##	6): Install Nginx
+		-- sudo apt update
+		-- sudo apt install nginx
+		-- Step 2 – Adjusting the Firewall
+			- This list displays three profiles available for Nginx:
+				~ Nginx Full: This profile opens both port 80 (normal, unencrypted web traffic) and port 443 (TLS/SSL encrypted traffic)
+				~ Nginx HTTP: This profile opens only port 80 (normal, unencrypted web traffic)
+				~ Nginx HTTPS: This profile opens only port 443 (TLS/SSL encrypted traffic)
+			- sudo ufw app list
+			- sudo ufw allow 'Nginx Full'
+			- sudo ufw status
+			- systemctl status nginx
+		-- Step 3 – Checking your Web Server
+			- systemctl status nginx
+			- ip addr show eth0 | grep inet | awk '{ print $2; }' | sed 's/\/.*$//'
+					OR
+			- curl -4 icanhazip.com
+		-- Step 4 – Managing the Nginx Process
+			- web server
+				stop  	-->	sudo systemctl stop nginx
+				start 	--> 	sudo systemctl start nginx
+				restart -->	sudo systemctl restart nginx
+				reload  -->	sudo systemctl reload nginx 
+				disable -->	sudo systemctl disable nginx
+				startup -->	sudo systemctl enable nginx
+		-- Step 5 – Setting Up Server Blocks (Recommended)
+			- Create the directory for your_domain as follows, using the -p flag to create any necessary parent directories:
+				~ sudo mkdir -p /var/www/your_domain/html
+			- Assign ownership of the directory with the $USER environment variable:
+				~ sudo chown -R $USER:$USER /var/www/your_domain/html
+			- permissions of your web roots should be correct if you haven’t modified your umask value (Recommended)
+				~ sudo chmod -R 755 /var/www/your_domain
+			- create a sample index.html page using nano or your favorite editor
+				~ nano /var/www/your_domain/html/index.html
+			- In order for Nginx to serve this content, it’s necessary to create a server block with the correct directives.
+				~ sudo nano /etc/nginx/sites-available/your_domain
+				~ server {
+					listen 80;
+					listen [::]:80;
 
-- 12: Create login view ( login.blade.php ) 
-  
-  ```
-  <form class="row g-4" action="{{ url('/authenticate') }}" method="GET">
-     <div class="input-group mb-3">
-         <input name="shop" type="text" class="form-control" placeholder="example.myshopify.com" aria-label="Recipient's username" aria-describedby="button-addon2">
-         <button class="btn btn-outline-success" type="submit" id="button-addon2">Install</button>
-      </div>
-  </form>
-  ```
+					root /var/www/your_domain/html;
+					index index.html index.htm index.nginx-debian.html;
 
-- 13: For Non-embaded app do 
-  ```
-  'appbridge_enabled' => (bool) env('SHOPIFY_APPBRIDGE_ENABLED', false)
-  ```
-#                          OR
-- 13: For Embaded app do 
-```
-'appbridge_enabled' => (bool) env('SHOPIFY_APPBRIDGE_ENABLED', true)
-```
+					server_name your_domain.com www.your_domain;
 
-- 14: For creating webHooks  {  
-  ```
-  php artisan shopify-app:make:webhook [name] [topic]
-  / for valid topics --->  
-  ```
-  refer -->>> https://shopify.dev/api/admin/graphql/reference/events/webhooksubscriptiontopic
-  #              EXAMPLE ::-->   php artisan shopify-app:make:webhook OrdersCreateJob orders/create
+					location / {
+						try_files $uri $uri/ =404;
+					}
+				 }
+			- Next, enable the file by creating a link from it to the sites-enabled directory, which Nginx reads from during startup
+				~ sudo ln -s /etc/nginx/sites-available/your_domain /etc/nginx/sites-enabled/
+			- It is necessary to adjust a single value in the /etc/nginx/nginx.conf file. Open the file
+				~ sudo nano /etc/nginx/nginx.conf
+				~ Find the 'server_names_hash_bucket_size' directive and remove the # symbol to uncomment the line:
+			- test to make sure that there are no syntax errors in any of your Nginx files
+				~ sudo nginx -t
+			- sudo systemctl restart nginx
+				
+##	7): Install ElasticSearch
+		-- sudo apt update
+		-- curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+		-- echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+		-- sudo apt update
+		-- sudo apt install elasticsearch
+		-- Step 2 — Configuring Elasticsearch
+			- sudo nano /etc/elasticsearch/elasticsearch.yml
+				~ network.host: localhost 
+			- elasticsearch 
+				stop  	-->	sudo systemctl stop elasticsearch
+				start 	--> 	sudo systemctl start elasticsearch
+				restart -->	
+				reload  -->	
+				disable -->	sudo systemctl disable elasticsearch
+				startup -->	sudo systemctl enable elasticsearch
+		-- Step 3 — Securing Elasticsearch
+			-
+##	8): Install Magento 2
+		--1 sudo apt update
+		--2 Get Magento marketplace accesskey  
+			- https://marketplace.magento.com/customer/accessKeys/
+		--3 cd /var/www/html
+		--4 composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition <install-directory-name>
+			- composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition magento
+		--5 Set file permissions:
+			- sudo chown -R $USER:$USER /var/www/html
+			- sudo chown -R :www-data /var/www/html/
+			- sudo chmod -R 755 /var/www/html/magento/
+			
+		--6 Setup MySQL Database
+			- sudo apt update
+			- sudo mysql -u root -p
+				~ CREATE DATABASE magento2db;
+				~ CREATE USER 'magento2user'@'localhost' IDENTIFIED BY 'admin@123';
+				~ GRANT ALL ON magento2db.* TO 'magento2user'@'localhost' IDENTIFIED BY 'admin@123' WITH GRANT OPTION;
+				~ FLUSH PRIVILEGES;
+				~ exit;
+				
+		--7 Setup Virtual Hosts	
+				***  START FOR Nginx  ***
+			- cd /etc/nginx/sites-enabled/
+			- cd /etc/nginx/sites-available/
+			- sudo systemctl status nginx status
+			- sudo nano /etc/nginx/sites-available/magento.local.com
+				upstream fastcgi_backend {
+					server unix:/run/php/php8.1-fpm.sock;
+				}
+				server {
+					listen 80;
+					server_name magento.local.com;
+					set $MAGE_ROOT /var/www/html/magento;
+					set $MAGE_MODE developer;
+					#set $MAGE_RUN_TYPE store;
+					include /var/www/html/magento.local/nginx.conf.sample;
+				}
+			- sudo ln -s /etc/nginx/sites-available/magento.local.com /etc/nginx/sites-enabled/		
 
-- 15: After create webHook we have to config it in {   config/shopify-app.php  } File.
-    LIKE :: -->  
-    
-    ```
-        /*
-        |--------------------------------------------------------------------------
-        | Shopify Webhooks
-        |--------------------------------------------------------------------------
-        |
-        | This option is for defining webhooks.
-        | `topic` is the GraphQL value of the Shopify webhook event.
-        | `address` is the endpoint to call.
-        |
-        | Valid values for `topic` can be found here:
-        | https://shopify.dev/api/admin/graphql/reference/events/webhooksubscriptiontopic
-        |
-        */
-                  /* 
-                    SHOPIFY_WEBHOOK_1_TOPIC=orders/create
-                    SHOPIFY_WEBHOOK_1_ADDRESS="${APP_URL}/webhook/orders-create"
+			- sudo nano etc/hosts
+				~ add  ( 172.0.0.1	magento.local.com )  -> save
+				~ sudo nginx -t
+				~ sudo systemctl restart nginx.service
+			- Give permission :: 
+				~ cd /var/www/html/magento
+				~ ll
+				~ sudo chmod -R 777 var/ pub/ generated/ app/etc/
+				~ test by ---> http://magento.local.com
+				~ if error  or for refresh file
+					--- sudo rm -rf /etc/nginx/sites-enabled/magento.local.com
+					--- sudo ln -s /etc/nginx/sites-available/magento.local.com /etc/nginx/sites-enabled/
+					--- sudo service nginx restart
+				
+			- sudo nano /etc/nginx/nginx.conf
+			- sudo nano /var/www/html/magento.local/nginx.conf.sample;
+			- sudo systemctl restart nginx.service
+			- sudo nano magento.local.com
+			- sudo nginx -t
+			- 	
+			
+				***  END FOR Nginx  ***
+				
+				***  START FOR Apache2  *** ---> ( IS not verified )
+			- sudo nano /etc/apache2/sites-available/magento2.conf
+			- <VirtualHost *:80>
+				ServerAdmin admin@domain.com
+				ServerName magento2.local
+				ServerAlias magento2.local
+				DocumentRoot /var/www/html/magento2/pub
+				<Directory /var/www/html/magento2/>
+				Options Indexes FollowSymLinks MultiViews
+				AllowOverride All
+				Order allow,deny
+				allow from all
+				</Directory>
+				ErrorLog ${APACHE_LOG_DIR}/magento_error.log
+				CustomLog ${APACHE_LOG_DIR}/magento_access.log combined
+			  </VirtualHost>
+			- sudo nano /etc/hosts
+			- 127.0.0.1   magento2.local
+			- sudo a2ensite magento2.conf
+			- sudo a2enmod rewrite
+			- sudo service apache2 restart
+				***  END FOR Apache2  *** <--- ( IS not verified )
+		--8 Install Magento2
+			- cd /var/www/html/magento/
+			sudo php bin/magento setup:install --base-url=http://magento.local.com --db-host=localhost --db-name=magento --db-user=magento2user --db-password=admin@123 --admin-firstname=Magento --admin-lastname=User --admin-email=admin@mystore.com --admin-user=admin --admin-password=admin@123 --language=en_US --currency=USD --timezone=America/Chicago --use-rewrites=1 --backend-frontname="admin" --search-engine=ticsearch7 --elasticsearch-host=localhost --elasticsearch-port=9200
+			
+			- sudo chmod -R 755 /var/www/html/magento
+			- sudo php bin/magento setup:upgrade
+			- sudo php bin/magento setup:di:compile
+			- sudo php bin/magento setup:static-content:deploy -f
+			- sudo php bin/magento indexer:reindex
+			- sudo php bin/magento cache:clean
+			- sudo php bin/magento cache:flush
+			- sudo chmod -R 777 pub/ var/ generated/
+			
+		--9 Frontend URL:
+			- http://magento2.local/
+			- Backend URL:
+			- http://magento2.local/admin
+			- User: admin
+			- Password: admin@123
+		--10 Disable Two-Factor Authorization:
+			- sudo php bin/magento module:disable Magento_TwoFactorAuth
+			- sudo php bin/magento cache:flush
+		--11 Switch to production mode:
+			- sudo php bin/magento deploy:mode:set production
+			- sudo php bin/magento cache:flush
+		--12 Switch to developer mode:
+			- sudo php bin/magento deploy:mode:set developer
+			- sudo php bin/magento cache:flush
 
-                    SHOPIFY_WEBHOOK_2_TOPIC=themes/publish
-                    SHOPIFY_WEBHOOK_2_ADDRESS="${APP_URL}/webhook/themes-publish"
+##	 0): Use OpenSSl for Nginx server
+		-- create certificate terminal code from this site [Digicert](https://www.digicert.com/easy-csr/openssl.htm) --(like this)
+			- openssl req -new -newkey rsa:2048 -nodes -out magento_local_com.csr -keyout magento_local_com.key -subj "/C=PK/ST=Pakistan/L=Faisalabad/O=eg/CN=https://magento.local.com"
+		-- 
 
-                    SHOPIFY_WEBHOOK_3_TOPIC=app/uninstalled
-                    SHOPIFY_WEBHOOK_3_ADDRESS="${APP_URL}/webhook/app-uninstalled"
-                   
-                 */
-      [
-         'topic' => env('SHOPIFY_WEBHOOK_0_TOPIC', 'APP_UNINSTALLED'), // APP_UNISTALLED  ===>  "app/uninstalled"
-         'address' => env('SHOPIFY_WEBHOOK_0_ADDRESS', 'https://your-domain.com/webhook/app-uninstalled')
-      ],
-      [
-        'topic' => env('SHOPIFY_WEBHOOK_1_TOPIC', 'PRODUCTS_CREATE'), // PRODUCTS_CREATE  ===>  "products/create"
-        'address' => env('SHOPIFY_WEBHOOK_1_ADDRESS', 'https://some-app.com/webhook/products-create')
-      ],
-      [
-        'topic' => env('SHOPIFY_WEBHOOK_1_TOPIC', 'orders/create'),
-        'address' => env('SHOPIFY_WEBHOOK_1_ADDRESS', 'https://some-app.com/webhook/orders-create')
-      ],
-      [
-        'topic' => env('SHOPIFY_WEBHOOK_1_TOPIC', 'themes/publish'),
-        'address' => env('SHOPIFY_WEBHOOK_1_ADDRESS', 'https://some-app.com/webhook/themes-publish')
-      ],
-     ```
-
-- 16: Change it in .env file like this 
-    LIKE :: -->  
-    ```
-      SHOPIFY_WEBHOOK_1_TOPIC=orders/create
-      SHOPIFY_WEBHOOK_1_ADDRESS="${APP_URL}/webhook/orders-create"
-      SHOPIFY_WEBHOOK_1_TOPIC=themes/publish
-      SHOPIFY_WEBHOOK_1_ADDRESS="${APP_URL}/webhook/themes-publish"
-    ```
-
-- 17:  ADD  Shopify scopes in the scope in .env file  {  https://shopify.dev/api/usage/access-scopes   }
-    LIKE :: -->  
-                             
-- 18: Create an web Route to clear cache  in database for webhooks    {  https://shopify.dev/api/admin-rest/2022-04/resources/webhook   }
-    LIKE::--> 
-    ```
-       Route::get('/clear-cache', function() {
-               Artisan::call('cache:clear');
-               return "Cache is cleared";
-       });
-    ```
-    
-- 19:  Add Laravel logs Viewer package to view errors in detailed UI   {  https://github.com/R-jee/laravel-log-viewer  }
-    LIKE::-->   
-    ```
-       Install via composer
-                 composer require rap2hpoutre/laravel-log-viewer
-       Add Service Provider to config/app.php in providers section
-                 Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
-       Add a route in your web routes file:
-                 Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index']);
-    ```
-    
-- 20:    Log::info($input);
-
-- 21:    php artisan make:model --migration --controller webhookJobs
-
-- 22:  Create Charging Plans
-  #     ---> create seeds in database section PlanSeeder.php
-  ```
-       <?php
-          use Illuminate\Database\Seeder;
-          use Osiset\ShopifyApp\Storage\Models\Plan;
-
-          class PlanSeeder extends Seeder
-          {
-              /**
-               * Seed the application's database.
-               *
-               * @return void
-               */
-              public function run()
-              {
-                  // $this->call(UsersTableSeeder::class);
-
-                  /*
-                   # Create a recurring "Demo" plan for $5.00, with 7 trial days, which will be presented on install to the shop and have the ability to issue usage charges to a maximum of $10.00
-                      INSERT INTO plans (
-                          `type`,
-                          `name`,
-                          `price`,
-                          `interval`,
-                          `capped_amount`,
-                          `terms`,
-                          `trial_days`,
-                          `test`,
-                          `on_install`,
-                          `created_at`,
-                          `updated_at`) VALUES
-                      ('RECURRING/ONETIME','Test Plan',5.00,'EVERY_30_DAYS',10.00,'Test terms',7,FALSE,1,NULL,NULL);
-                  */
-
-
-                  $Plan = new Plan();
-                  $Plan->type = "RECURRING";
-                  $Plan->name = "Basic Plan";
-                  $Plan->price = 4.99;
-                  $Plan->interval = "EVERY_30_DAYS";
-                  $Plan->capped_amount = 10.00;
-                  $Plan->terms = "Basic Plan ~ amount 4.99";
-                  $Plan->trial_days = 7;
-                  $Plan->test = 1;
-                  $Plan->on_install = 1;
-                  $Plan->save();
-
-                  $Plan = new Plan();
-                  $Plan->type = "RECURRING";
-                  $Plan->name = "Premiere Plan ~ amount 9.99";
-                  $Plan->price = 9.99;
-                  $Plan->interval = "EVERY_30_DAYS";
-                  $Plan->capped_amount = 10.00;
-                  $Plan->terms = "Premiere Plan ~ amount 9.99";
-                  $Plan->trial_days = 14;
-                  $Plan->test = 1;
-                  $Plan->on_install = 1;
-                  $Plan->save();
-
-              }
-          }
-  ```
-
-- 23 :  php artisan make:seeder PlanSeeder  ------->    php artisan db:seed
-
-- 24 :  php artisan make:middleware CustomBillable
-
-- 25:  
-  ```
-    <?php
-      namespace App\Http\Middleware;
-      use Closure;
-      use Illuminate\Support\Facades\Config;
-      class CustomBillable
-      {
-          /**
-           * Handle an incoming request.
-           *
-           * @param  \Illuminate\Http\Request  $request
-           * @param  \Closure  $next
-           * @return mixed
-           */
-          public function handle($request, Closure $next)
-          {
-              info(json_encode($request));
-              if( Config::get('shopify-app.billing_enabled') === true  ){
-                  $shop = auth()->user();
-
-                  if(!$shop->isFreemium() && !$shop->isGrandfathered() && $shop->plan == null ){
-                  // if(!$shop->shopify_freemium && !$shop->shopify_grandfathered && $shop->plan == null ){
-                      return redirect()->route('billing.plans');
-                  }
-              }
-              return $next($request);
-          }
-      }
-  ```
-  
-  # ADD  middleware in  Kernel.php file at  last 
-  ```
-    'custom.billable' => \Illuminate\Auth\Middleware\CustomBillable::class,
-  ```
-  
-- 26:    
-  ```
-    <div class="bottom">
-         <a href="{{ route('billing', ['plan' => $plans[0]->id ]) }}">Buy Now</a>
-    </div>
-    <div class="bottom">
-         <a href="{{ route('billing', ['plan' => $plans[1]->id ]) }}">Buy Now</a>
-    </div>
-
-    <div class="bottom">
-        <a href="{{ route('free.plan') }}">Get Access</a>
-    </div>
-  ```
-
-- 27 :  
-  ```
-    Route::get('/free-plan', function(){
-        User::where('id' , auth()->user()->id )->update(
-            [
-                'plan_id' => NULL,
-                'shopify_freemium' => 1
-            ]
-        );
-        return redirect()->route('home');
-    })->name('free.plan');  
-  ```
-  
-- 28:  App proxy in app
-  ```
-    Route::get('checkSetupStatus', 'CartButtonhiderDetailController@checkSetupStatus')->name('check.SetupStatus')->middleware(['auth.proxy']);
-        public function checkSetupStatus(){
-            $shop = User::where('name', request('shop'))->first();
-            if($shop->status){
-                return response()->json(['status' => true]);
-            }else{
-                return response()->json(['status' => false]);
-            }
-        }
-  ```
-  
-# After Authentication Job -->
-  - php artisan make:job AfterAuthenticateJob
-
-
- 
+##	00): Initial Server Setup with Ubuntu 20.04
+		-- sudo apt update
+		-- curl -4 icanhazip.com  --> { your_server_ip }
+		-- ssh root@your_server_ip
+		-- Step 2 — Creating a New User
+			- add user --> { adduser testuser }
+		-- Step 3 — Granting Administrative Privileges
+			- usermod -aG sudo testuser
+			
+			
